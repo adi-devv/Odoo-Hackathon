@@ -145,7 +145,7 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                             ),
                             Text(
-                              'User: $userName',
+                              'Author: $userName',
                               style: TextStyle(fontSize: 12),
                             ),
                             const SizedBox(height: 4),

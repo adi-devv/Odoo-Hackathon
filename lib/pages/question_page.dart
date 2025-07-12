@@ -206,9 +206,6 @@ class _QuestionPageState extends State<QuestionPage> {
     String formattedTags = tags.isNotEmpty ? tags.join(' ') : 'No Tags';
 
     Timestamp? timestamp = widget.questionData['timestamp'] as Timestamp?;
-    String formattedTime = timestamp != null
-        ? '${timestamp.toDate().toLocal().day}/${timestamp.toDate().toLocal().month}/${timestamp.toDate().toLocal().year} ${timestamp.toDate().toLocal().hour}:${timestamp.toDate().toLocal().minute}'
-        : 'Unknown Time';
 
     bool isSolved = widget.questionData['solved'] == true;
 
@@ -264,12 +261,12 @@ class _QuestionPageState extends State<QuestionPage> {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          'Posted by $userName',
+                          'Author: $userName',
                           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          'Posted on: $formattedTime',
+                          'Posted ${Utils.timeAgo(timestamp?.toDate())}',
                           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                         if (isSolved)
