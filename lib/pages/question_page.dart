@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:stackit/components/utils.dart';
+import 'package:stackit/components/utils.dart'; // Make sure this path is correct
 
 class QuestionPage extends StatefulWidget {
   final String questionId;
@@ -68,6 +68,10 @@ class _QuestionPageState extends State<QuestionPage> {
         'userName': user.displayName ?? 'Anonymous',
         'replyText': replyText,
         'timestamp': FieldValue.serverTimestamp(),
+        'upvotes': 0, // Initialize upvotes
+        'downvotes': 0, // Initialize downvotes
+        'upvoters': [], // Initialize upvoters list
+        'downvoters': [], // Initialize downvoters list
       });
 
       _replyController.clear();
@@ -78,6 +82,71 @@ class _QuestionPageState extends State<QuestionPage> {
       print('Error posting reply: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to post reply: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _voteReply(String replyId, bool isUpvote, List<dynamic> currentUpvoters, List<dynamic> currentDownvoters) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to vote.')),
+      );
+      return;
+    }
+
+    String userId = user.uid;
+    bool alreadyUpvoted = currentUpvoters.contains(userId);
+    bool alreadyDownvoted = currentDownvoters.contains(userId);
+
+    DocumentReference replyRef = _firestore
+        .collection('Questions')
+        .doc(widget.questionId)
+        .collection('Replies')
+        .doc(replyId);
+
+    try {
+      if (isUpvote) {
+        if (alreadyUpvoted) {
+          await replyRef.update({
+            'upvotes': FieldValue.increment(-1),
+            'upvoters': FieldValue.arrayRemove([userId]),
+          });
+        } else {
+          await replyRef.update({
+            'upvotes': FieldValue.increment(1),
+            'upvoters': FieldValue.arrayUnion([userId]),
+          });
+          if (alreadyDownvoted) {
+            await replyRef.update({
+              'downvotes': FieldValue.increment(-1),
+              'downvoters': FieldValue.arrayRemove([userId]),
+            });
+          }
+        }
+      } else { // isDownvote
+        if (alreadyDownvoted) {
+          await replyRef.update({
+            'downvotes': FieldValue.increment(-1),
+            'downvoters': FieldValue.arrayRemove([userId]),
+          });
+        } else {
+          await replyRef.update({
+            'downvotes': FieldValue.increment(1),
+            'downvoters': FieldValue.arrayUnion([userId]),
+          });
+          if (alreadyUpvoted) {
+            await replyRef.update({
+              'upvotes': FieldValue.increment(-1),
+              'upvoters': FieldValue.arrayRemove([userId]),
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('Error voting: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to cast vote: ${e.toString()}')),
       );
     }
   }
@@ -99,7 +168,8 @@ class _QuestionPageState extends State<QuestionPage> {
 
     bool isSolved = widget.questionData['solved'] == true;
 
-    return Scaffold(backgroundColor: Theme.of(context).colorScheme.secondary,
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.secondary,
       appBar: AppBar(
         title: Text(title),
         backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -207,10 +277,21 @@ class _QuestionPageState extends State<QuestionPage> {
                           Map<String, dynamic> replyData = replyDoc.data() as Map<String, dynamic>;
 
                           String replyText = replyData['replyText'] ?? 'No Reply Text';
-                          String replierId = replyData['userID'] ?? 'Unknown User';
+                          // String replierId = replyData['userID'] ?? 'Unknown User'; // Not used in display string
                           String replierName = replyData['userName'] ?? 'Anonymous';
                           Timestamp? replyTimestamp = replyData['timestamp'] as Timestamp?;
                           String formattedReplyTime = Utils.timeAgo(replyTimestamp?.toDate());
+
+                          // Extract vote data
+                          int upvotes = replyData['upvotes'] ?? 0;
+                          int downvotes = replyData['downvotes'] ?? 0;
+                          List<dynamic> upvoters = replyData['upvoters'] ?? [];
+                          List<dynamic> downvoters = replyData['downvoters'] ?? [];
+
+                          // Check if current user has voted
+                          String? currentUserId = _auth.currentUser?.uid;
+                          bool currentUserUpvoted = currentUserId != null && upvoters.contains(currentUserId);
+                          bool currentUserDownvoted = currentUserId != null && downvoters.contains(currentUserId);
 
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 4.0),
@@ -234,6 +315,33 @@ class _QuestionPageState extends State<QuestionPage> {
                                       fontSize: 10,
                                       color: Colors.grey[600],
                                     ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.arrow_circle_up,
+                                          color: currentUserUpvoted ? Colors.green : Colors.grey,
+                                        ),
+                                        onPressed: () {
+                                          _voteReply(replyDoc.id, true, upvoters, downvoters);
+                                        },
+                                      ),
+                                      Text('$upvotes'),
+                                      const SizedBox(width: 15),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.arrow_circle_down,
+                                          color: currentUserDownvoted ? Colors.red : Colors.grey,
+                                        ),
+                                        onPressed: () {
+                                          _voteReply(replyDoc.id, false, upvoters, downvoters);
+                                        },
+                                      ),
+                                      Text('$downvotes'),
+                                    ],
                                   ),
                                 ],
                               ),
