@@ -6,7 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stackit/main.dart';
-import 'package:stackit/pages/nav/home_page.dart';
+import 'package:stackit/pages/home_page.dart';
 
 class UserDataService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

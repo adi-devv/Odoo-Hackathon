@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:stackit/components/my_logo.dart';
-import 'package:stackit/pages/nav/home_page.dart';
+import 'package:stackit/pages/home_page.dart';
 
 class IntroPage extends StatefulWidget {
   final bool signedIn;
@@ -56,8 +56,6 @@ class _IntroPageState extends State<IntroPage> with SingleTickerProviderStateMix
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    precacheImage(AssetImage("assets/default33.png"), context);
   }
 
   @override
@@ -93,15 +91,6 @@ class _IntroPageState extends State<IntroPage> with SingleTickerProviderStateMix
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            SizedBox.expand(
-              child: Opacity(
-                opacity: 0.05,
-                child: Image.asset(
-                  'assets/default33.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -207,7 +196,7 @@ class _IntroPageState extends State<IntroPage> with SingleTickerProviderStateMix
                                   duration: const Duration(milliseconds: 150),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.onInverseSurface,
+                                      color: Theme.of(context).colorScheme.onPrimary,
                                       borderRadius: BorderRadius.circular(30),
                                       boxShadow: [
                                         BoxShadow(
