@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:stackit/components/utils.dart';
 
 class QuestionPage extends StatefulWidget {
   final String questionId;
@@ -85,7 +86,7 @@ class _QuestionPageState extends State<QuestionPage> {
   Widget build(BuildContext context) {
     String title = widget.questionData['title'] ?? 'No Title';
     String description = widget.questionData['description'] ?? 'No Description';
-    String userId = widget.questionData['userID'] ?? 'Unknown User';
+    String userName = widget.questionData['userName'] ?? 'Unknown';
 
     List<dynamic> tagsDynamic = widget.questionData['tags'] ?? [];
     List<String> tags = tagsDynamic.map((item) => '#${item.toString()}').toList();
@@ -112,14 +113,12 @@ class _QuestionPageState extends State<QuestionPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ... inside your SingleChildScrollView's Column ...
-
                   Container(
-                    padding: const EdgeInsets.all(16.0), // Padding inside the container
+                    padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary, // Use your theme's surface color
-                      borderRadius: BorderRadius.circular(15.0), // Adjust the radius for more/less curve
-                      boxShadow: [ // Optional: Add a subtle shadow
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(15.0),
+                      boxShadow: [
                         BoxShadow(
                           color: Colors.grey.withOpacity(0.1),
                           spreadRadius: 1,
@@ -136,13 +135,13 @@ class _QuestionPageState extends State<QuestionPage> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface, // Use onSurface for text
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 10),
                         Text(
                           description,
-                          style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface), // Use onSurface
+                          style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -151,7 +150,7 @@ class _QuestionPageState extends State<QuestionPage> {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          'Posted by User ID: $userId',
+                          'Posted by $userName',
                           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                         const SizedBox(height: 5),
@@ -174,7 +173,6 @@ class _QuestionPageState extends State<QuestionPage> {
                       ],
                     ),
                   ),
-// ... The Divider and Replies section would come after this Container ...
                   const Divider(height: 30, thickness: 1),
                   Text(
                     'Replies:',
@@ -212,13 +210,11 @@ class _QuestionPageState extends State<QuestionPage> {
                           String replierId = replyData['userID'] ?? 'Unknown User';
                           String replierName = replyData['userName'] ?? 'Anonymous';
                           Timestamp? replyTimestamp = replyData['timestamp'] as Timestamp?;
-                          String formattedReplyTime = replyTimestamp != null
-                              ? '${replyTimestamp.toDate().toLocal().day}/${replyTimestamp.toDate().toLocal().month}/${replyTimestamp.toDate().toLocal().year} ${replyTimestamp.toDate().toLocal().hour}:${replyTimestamp.toDate().toLocal().minute}'
-                              : 'Unknown Time';
+                          String formattedReplyTime = Utils.timeAgo(replyTimestamp?.toDate());
 
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 4.0),
-                            color: Theme.of(context).colorScheme.surface,
+                            color: Theme.of(context).colorScheme.tertiary,
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
                               child: Column(
@@ -233,7 +229,7 @@ class _QuestionPageState extends State<QuestionPage> {
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
-                                    'Replied by $replierName ($replierId) on $formattedReplyTime',
+                                    '$replierName replied $formattedReplyTime',
                                     style: TextStyle(
                                       fontSize: 10,
                                       color: Colors.grey[600],

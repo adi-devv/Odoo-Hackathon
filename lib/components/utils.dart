@@ -11,7 +11,8 @@ class Utils {
 
   String formatTimestamp(int ts) => DateTime.fromMillisecondsSinceEpoch(ts).toLocal().toString().substring(11, 16);
 
-  static String timeAgo(DateTime dateTime) {
+  static String timeAgo(DateTime? dateTime) {
+    if (dateTime == null){return '';}
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
