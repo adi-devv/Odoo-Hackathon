@@ -3,7 +3,7 @@
 # Team Members
 Aadit Singal
 
-Aditya Yuvraj
+Aditya Yuvraj (Team Leader)
 
 Sanket Bhatnagar
 
