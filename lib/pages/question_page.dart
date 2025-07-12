@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:stackit/components/utils.dart'; // Make sure this path is correct
+import 'package:stackit/components/utils.dart'; // Make sure this path is correct for your project
 
 class QuestionPage extends StatefulWidget {
   final String questionId;
@@ -23,6 +23,7 @@ class _QuestionPageState extends State<QuestionPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   late Stream<QuerySnapshot> _repliesStream;
+  String? _questionAuthorId;
 
   @override
   void initState() {
@@ -33,6 +34,8 @@ class _QuestionPageState extends State<QuestionPage> {
         .collection('Replies')
         .orderBy('timestamp', descending: true)
         .snapshots();
+
+    _questionAuthorId = widget.questionData['userID'];
   }
 
   @override
@@ -68,10 +71,11 @@ class _QuestionPageState extends State<QuestionPage> {
         'userName': user.displayName ?? 'Anonymous',
         'replyText': replyText,
         'timestamp': FieldValue.serverTimestamp(),
-        'upvotes': 0, // Initialize upvotes
-        'downvotes': 0, // Initialize downvotes
-        'upvoters': [], // Initialize upvoters list
-        'downvoters': [], // Initialize downvoters list
+        'upvotes': 0,
+        'downvotes': 0,
+        'upvoters': [],
+        'downvoters': [],
+        'isSolution': false, // Initialize 'isSolution' field
       });
 
       _replyController.clear();
@@ -147,6 +151,46 @@ class _QuestionPageState extends State<QuestionPage> {
       print('Error voting: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to cast vote: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _markAsSolution(String replyId) async {
+    final user = _auth.currentUser;
+    if (user == null || user.uid != _questionAuthorId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Only the question author can mark a solution.')),
+      );
+      return;
+    }
+
+    if (widget.questionData['solved'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This question is already marked as solved.')),
+      );
+      return;
+    }
+
+    try {
+      await _firestore
+          .collection('Questions')
+          .doc(widget.questionId)
+          .update({'solved': true});
+
+      await _firestore
+          .collection('Questions')
+          .doc(widget.questionId)
+          .collection('Replies')
+          .doc(replyId)
+          .update({'isSolution': true});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Question marked as solved!')),
+      );
+    } catch (e) {
+      print('Error marking as solution: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to mark as solution: ${e.toString()}')),
       );
     }
   }
@@ -277,25 +321,28 @@ class _QuestionPageState extends State<QuestionPage> {
                           Map<String, dynamic> replyData = replyDoc.data() as Map<String, dynamic>;
 
                           String replyText = replyData['replyText'] ?? 'No Reply Text';
-                          // String replierId = replyData['userID'] ?? 'Unknown User'; // Not used in display string
                           String replierName = replyData['userName'] ?? 'Anonymous';
                           Timestamp? replyTimestamp = replyData['timestamp'] as Timestamp?;
                           String formattedReplyTime = Utils.timeAgo(replyTimestamp?.toDate());
 
-                          // Extract vote data
                           int upvotes = replyData['upvotes'] ?? 0;
                           int downvotes = replyData['downvotes'] ?? 0;
                           List<dynamic> upvoters = replyData['upvoters'] ?? [];
                           List<dynamic> downvoters = replyData['downvoters'] ?? [];
+                          bool isThisReplyTheSolution = replyData['isSolution'] == true;
 
-                          // Check if current user has voted
                           String? currentUserId = _auth.currentUser?.uid;
                           bool currentUserUpvoted = currentUserId != null && upvoters.contains(currentUserId);
                           bool currentUserDownvoted = currentUserId != null && downvoters.contains(currentUserId);
+                          bool isCurrentUserAuthor = currentUserId == _questionAuthorId;
+                          bool isQuestionSolved = widget.questionData['solved'] == true;
+
 
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 4.0),
-                            color: Theme.of(context).colorScheme.tertiary,
+                            color: isThisReplyTheSolution
+                                ? Colors.green.shade50
+                                : Theme.of(context).colorScheme.tertiary,
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
                               child: Column(
@@ -316,31 +363,62 @@ class _QuestionPageState extends State<QuestionPage> {
                                       color: Colors.grey[600],
                                     ),
                                   ),
+                                  if (isThisReplyTheSolution)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Text(
+                                        'Solution ✅',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green.shade700,
+                                        ),
+                                      ),
+                                    ),
                                   const SizedBox(height: 8),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.arrow_circle_up,
-                                          color: currentUserUpvoted ? Colors.green : Colors.grey,
+                                      if (isCurrentUserAuthor && !isQuestionSolved)
+                                        ElevatedButton.icon(
+                                          onPressed: () => _markAsSolution(replyDoc.id),
+                                          icon: const Icon(Icons.check),
+                                          label: const Text('Mark as Solution'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.blue.shade700,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            textStyle: const TextStyle(fontSize: 12),
+                                          ),
                                         ),
-                                        onPressed: () {
-                                          _voteReply(replyDoc.id, true, upvoters, downvoters);
-                                        },
-                                      ),
-                                      Text('$upvotes'),
-                                      const SizedBox(width: 15),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.arrow_circle_down,
-                                          color: currentUserDownvoted ? Colors.red : Colors.grey,
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            IconButton(
+                                              icon: Icon(
+                                                Icons.arrow_circle_up,
+                                                color: currentUserUpvoted ? Colors.green : Colors.grey,
+                                              ),
+                                              onPressed: () {
+                                                _voteReply(replyDoc.id, true, upvoters, downvoters);
+                                              },
+                                            ),
+                                            Text('$upvotes'),
+                                            const SizedBox(width: 15),
+                                            IconButton(
+                                              icon: Icon(
+                                                Icons.arrow_circle_down,
+                                                color: currentUserDownvoted ? Colors.red : Colors.grey,
+                                              ),
+                                              onPressed: () {
+                                                _voteReply(replyDoc.id, false, upvoters, downvoters);
+                                              },
+                                            ),
+                                            Text('$downvotes'),
+                                          ],
                                         ),
-                                        onPressed: () {
-                                          _voteReply(replyDoc.id, false, upvoters, downvoters);
-                                        },
                                       ),
-                                      Text('$downvotes'),
                                     ],
                                   ),
                                 ],
