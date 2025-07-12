@@ -1,6 +1,5 @@
 import 'package:stackit/services/auth/auth_gate.dart';
 import 'package:stackit/theme/theme_provider.dart';
-import 'package:stackit/services/app_lifecycle_handler.dart';
 import 'package:stackit/components/my_navigator_observer.dart';
 import 'package:stackit/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,9 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 @pragma('vm:entry-point')
-
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<AppLifecycleHandlerState> appLifecycleKey = GlobalKey<AppLifecycleHandlerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,10 +25,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: AppLifecycleHandler(
-        key: appLifecycleKey,
-        child: const MyApp(),
-      ),
+      child: const MyApp(),
     ),
   );
 }

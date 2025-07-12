@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:stackit/components/my_logo.dart';
-import 'package:stackit/pages/nav/route_page.dart';
+import 'package:stackit/pages/nav/home_page.dart';
 
 class IntroPage extends StatefulWidget {
   final bool signedIn;
@@ -194,7 +194,7 @@ class _IntroPageState extends State<IntroPage> with SingleTickerProviderStateMix
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => RoutePage(),
+                                builder: (context) => HomePage(),
                               ),
                             ),
                             onTapDown: _onTapDown,

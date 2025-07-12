@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:stackit/services/auth/auth_service.dart';
 import 'package:stackit/components/my_logo.dart';
 import 'package:stackit/components/smooth_toggle.dart';
-import 'package:stackit/models/bottom_navbar_key.dart';
 import 'package:flutter/material.dart';
 import 'package:stackit/theme/theme_provider.dart';
 
@@ -18,24 +17,19 @@ class MyDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: Theme
-          .of(context)
-          .brightness == Brightness.dark
+      decoration: Theme.of(context).brightness == Brightness.dark
           ? BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.2),
-            blurRadius: 100,
-            offset: Offset(4, 0), // Shadow on the right side
-          ),
-        ],
-      )
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  blurRadius: 100,
+                  offset: Offset(4, 0),
+                ),
+              ],
+            )
           : null,
       child: Drawer(
-        backgroundColor: Theme
-            .of(context)
-            .colorScheme
-            .secondary,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         child: Column(
           children: [
             SizedBox(height: 12),
@@ -52,36 +46,13 @@ class MyDrawer extends StatelessWidget {
                 GButton(icon: Icons.dark_mode),
                 GButton(icon: Icons.light_mode),
               ],
-              initialIndex: Provider
-                  .of<ThemeProvider>(context)
-                  .isDarkMode ? 0 : 1,
+              initialIndex: Provider.of<ThemeProvider>(context).isDarkMode ? 0 : 1,
               onTabChange: (index) {
                 final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
                 if (themeProvider.isDarkMode != (index == 0)) {
                   themeProvider.toggleTheme();
                 }
               },
-            ),
-            SizedBox(height: 20),
-            Padding(
-              padding: EdgeInsets.only(left: 25),
-              child: ListTile(
-                  title: Text('Home'),
-                  leading: Icon(Icons.home),
-                  onTap: () {
-                    Navigator.pop(context);
-                    BottomNavbarKey.instance.key.currentState?.changeTab(0);
-                  }),
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 25),
-              child: ListTile(
-                  title: Text('Profile'),
-                  leading: Icon(Icons.person),
-                  onTap: () {
-                    Navigator.pop(context);
-                    BottomNavbarKey.instance.key.currentState?.changeTab(3);
-                  }),
             ),
             Spacer(),
             Padding(

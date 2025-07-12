@@ -106,7 +106,7 @@ class _SlidingNotificationState extends State<SlidingNotification> with TickerPr
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.surface.withOpacity(.1),
+                          color: Theme.of(context).colorScheme.surface.withValues(alpha:.1),
                           offset: Offset(0, 2),
                           blurRadius: 15,
                         ),
@@ -163,7 +163,7 @@ class _SlidingNotificationState extends State<SlidingNotification> with TickerPr
                               Text(
                                 widget.message['msg'],
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.85),
+                                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha:0.85),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
                                 ),
